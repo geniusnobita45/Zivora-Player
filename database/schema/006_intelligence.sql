@@ -1,0 +1,85 @@
+create schema if not exists extensions;
+create extension if not exists vector with schema extensions;
+
+create table public.transcripts (
+  id uuid primary key default gen_random_uuid(),
+  media_version_id uuid not null unique references public.media_versions(id) on delete cascade,
+  language text not null check (btrim(language) <> ''),
+  duration_s double precision not null check (duration_s > 0 and duration_s <= 86400),
+  provider text not null check (btrim(provider) <> ''),
+  model text not null check (btrim(model) <> ''),
+  source_checksum text not null check (source_checksum ~ '^[a-f0-9]{64}$'),
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
+create table public.transcript_segments (
+  id uuid primary key, transcript_id uuid not null references public.transcripts(id) on delete cascade,
+  media_version_id uuid not null references public.media_versions(id) on delete cascade,
+  sequence_index integer not null check (sequence_index >= 0),
+  start_s double precision not null check (start_s >= 0), end_s double precision not null,
+  speaker text, text text not null check (btrim(text) <> ''), confidence double precision,
+  embedding extensions.vector(1536), embedding_model text,
+  search_vector tsvector generated always as (to_tsvector('simple', coalesce(speaker,'') || ' ' || text)) stored,
+  created_at timestamptz not null default now(),
+  check (end_s > start_s and end_s <= 86400), check (confidence is null or confidence between 0 and 1),
+  unique (media_version_id, sequence_index)
+);
+create table public.scenes (
+  id uuid primary key, media_version_id uuid not null references public.media_versions(id) on delete cascade,
+  scene_index integer not null check (scene_index >= 0), start_s double precision not null check (start_s >= 0),
+  end_s double precision not null, title text not null check (btrim(title) <> ''),
+  summary text not null check (btrim(summary) <> ''), visual_confidence double precision,
+  search_vector tsvector generated always as (to_tsvector('simple', title || ' ' || summary)) stored,
+  created_at timestamptz not null default now(),
+  check (end_s > start_s and end_s <= 86400), check (visual_confidence is null or visual_confidence between 0 and 1),
+  unique (media_version_id, scene_index)
+);
+create table public.scene_embeddings (
+  id uuid primary key, scene_id uuid not null unique references public.scenes(id) on delete cascade,
+  media_version_id uuid not null references public.media_versions(id) on delete cascade,
+  embedding extensions.vector(1536) not null, embedding_model text not null check (btrim(embedding_model) <> ''),
+  created_at timestamptz not null default now()
+);
+create table public.characters (
+  id uuid primary key, content_id uuid not null references public.content(id) on delete cascade,
+  name text not null check (btrim(name) <> ''), description text not null default '', aliases text[] not null default '{}',
+  first_appearance_s double precision check (first_appearance_s is null or first_appearance_s between 0 and 86400),
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+  unique (content_id, name)
+);
+create table public.character_appearances (
+  id uuid primary key, character_id uuid not null references public.characters(id) on delete cascade,
+  scene_id uuid not null references public.scenes(id) on delete cascade,
+  media_version_id uuid not null references public.media_versions(id) on delete cascade,
+  confidence double precision not null check (confidence between 0 and 1), is_first_appearance boolean not null default false,
+  created_at timestamptz not null default now(), unique (character_id, scene_id)
+);
+create table public.chapters (
+  id uuid primary key, media_version_id uuid not null references public.media_versions(id) on delete cascade,
+  chapter_index integer not null check (chapter_index >= 0), start_s double precision not null check (start_s >= 0),
+  end_s double precision not null, title text not null check (btrim(title) <> ''), summary text not null check (btrim(summary) <> ''),
+  created_at timestamptz not null default now(), check (end_s > start_s and end_s <= 86400),
+  unique (media_version_id, chapter_index)
+);
+create table public.skip_segments (
+  id uuid primary key, media_version_id uuid not null references public.media_versions(id) on delete cascade,
+  kind text not null check (kind in ('intro','recap','credits')), start_s double precision not null check (start_s >= 0),
+  end_s double precision not null, confidence double precision not null check (confidence between 0 and 1),
+  evidence jsonb not null default '{}'::jsonb check (jsonb_typeof(evidence) = 'object'), created_at timestamptz not null default now(),
+  check (end_s > start_s and end_s <= 86400), unique (media_version_id, kind, start_s)
+);
+create table public.recap_segments (
+  id uuid primary key, media_version_id uuid not null references public.media_versions(id) on delete cascade,
+  kind text not null check (kind in ('episode','what_did_i_miss')), start_s double precision not null check (start_s >= 0),
+  end_s double precision not null, summary text not null check (btrim(summary) <> ''), created_at timestamptz not null default now(),
+  check (end_s > start_s and end_s <= 86400), unique (media_version_id, kind, start_s, end_s)
+);
+create table public.entities (
+  id uuid primary key, media_version_id uuid not null references public.media_versions(id) on delete cascade,
+  scene_id uuid references public.scenes(id) on delete cascade,
+  transcript_segment_id uuid references public.transcript_segments(id) on delete cascade,
+  entity_type text not null check (entity_type in ('person','place','organization','object','event','other')),
+  name text not null check (btrim(name) <> ''), normalized_name text not null check (btrim(normalized_name) <> ''),
+  confidence double precision not null check (confidence between 0 and 1), created_at timestamptz not null default now(),
+  check (num_nonnulls(scene_id, transcript_segment_id) >= 1),
+  unique (media_version_id, scene_id, transcript_segment_id, entity_type, normalized_name)
+);

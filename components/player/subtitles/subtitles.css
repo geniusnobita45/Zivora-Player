@@ -1,0 +1,40 @@
+.zivora-custom-subtitles {
+  position: absolute;
+  inset-inline: 5%;
+  bottom: 6%;
+  z-index: 2;
+  text-align: center;
+  pointer-events: none;
+  font-size: clamp(16px, 2.4vw, 28px);
+  line-height: 1.45;
+  color: #fff;
+}
+.zivora-custom-subtitles[data-controls="true"] {
+  bottom: min(32%, 210px);
+}
+.zivora-custom-subtitles[data-position="top"] {
+  top: 15%;
+  bottom: auto;
+}
+.zivora-custom-subtitles[data-size="large"] {
+  font-size: clamp(21px, 3.2vw, 38px);
+}
+.zivora-custom-cue {
+  margin: 4px auto;
+  max-width: 80ch;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.zivora-custom-cue > span,
+.zivora-custom-cue small {
+  background: #000e;
+  padding: 2px 8px;
+  border-radius: 3px;
+  box-decoration-break: clone;
+}
+.zivora-custom-cue small {
+  display: table;
+  margin: 2px auto;
+  font-size: 0.7em;
+  color: #e2e8f0;
+}

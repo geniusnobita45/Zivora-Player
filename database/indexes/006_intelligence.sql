@@ -1,0 +1,18 @@
+create index transcript_segments_search_idx on public.transcript_segments using gin(search_vector);
+create index scenes_search_idx on public.scenes using gin(search_vector);
+create index scene_embeddings_hnsw_idx on public.scene_embeddings using hnsw (embedding extensions.vector_cosine_ops);
+create index transcript_segments_hnsw_idx on public.transcript_segments using hnsw (embedding extensions.vector_cosine_ops) where embedding is not null;
+create index transcript_segments_version_time_idx on public.transcript_segments(media_version_id, start_s);
+create index transcript_segments_transcript_idx on public.transcript_segments(transcript_id);
+create index scenes_version_time_idx on public.scenes(media_version_id, start_s);
+create index scene_embeddings_version_idx on public.scene_embeddings(media_version_id);
+create index characters_content_idx on public.characters(content_id);
+create index character_appearances_character_idx on public.character_appearances(character_id);
+create index character_appearances_scene_idx on public.character_appearances(scene_id);
+create index character_appearances_version_idx on public.character_appearances(media_version_id);
+create index chapters_version_time_idx on public.chapters(media_version_id, start_s);
+create index skip_segments_version_time_idx on public.skip_segments(media_version_id, start_s);
+create index recap_segments_version_time_idx on public.recap_segments(media_version_id, start_s);
+create index entities_version_idx on public.entities(media_version_id);
+create index entities_scene_idx on public.entities(scene_id);
+create index entities_transcript_segment_idx on public.entities(transcript_segment_id);

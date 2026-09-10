@@ -1,0 +1,11 @@
+grant usage on schema extensions to service_role;
+revoke all on function public.ai_media_scope(uuid) from public, anon, authenticated;
+grant execute on function public.ai_media_scope(uuid) to service_role;
+revoke all on function public.search_scenes(extensions.vector,text,uuid,integer,double precision,jsonb,integer) from public,anon,authenticated;
+grant execute on function public.search_scenes(extensions.vector,text,uuid,integer,double precision,jsonb,integer) to service_role;
+revoke all on function public.search_transcript(extensions.vector,text,uuid,integer,double precision,jsonb,integer) from public,anon,authenticated;
+grant execute on function public.search_transcript(extensions.vector,text,uuid,integer,double precision,jsonb,integer) to service_role;
+revoke all on function public.consume_ai_request(uuid) from public,anon,authenticated;
+grant execute on function public.consume_ai_request(uuid) to service_role;
+revoke all on function public.append_ai_exchange(uuid,uuid,uuid,uuid,text,jsonb) from public,anon,authenticated;
+grant execute on function public.append_ai_exchange(uuid,uuid,uuid,uuid,text,jsonb) to service_role;

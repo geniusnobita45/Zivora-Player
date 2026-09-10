@@ -1,0 +1,12 @@
+create index watch_history_user_updated_idx on public.watch_history(user_id, updated_at desc);
+create index watch_progress_user_updated_idx on public.watch_progress(user_id, updated_at desc);
+create index bookmarks_user_target_idx on public.bookmarks(user_id, content_id, episode_id, position_s);
+create index playback_sessions_user_updated_idx on public.playback_sessions(user_id, updated_at desc);
+create index watch_progress_content_idx on public.watch_progress(content_id);
+create index watch_progress_episode_idx on public.watch_progress(episode_id);
+create index watch_history_content_idx on public.watch_history(content_id);
+create index watch_history_episode_idx on public.watch_history(episode_id);
+create index bookmarks_content_idx on public.bookmarks(content_id);
+create index bookmarks_episode_idx on public.bookmarks(episode_id);
+create index playback_sessions_content_idx on public.playback_sessions(content_id);
+create index playback_sessions_episode_idx on public.playback_sessions(episode_id);

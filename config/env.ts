@@ -1,0 +1,53 @@
+import { z } from "zod";
+
+const envSchema = z.object({
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  R2_ACCOUNT_ID: z.string().min(1),
+  R2_ACCESS_KEY_ID: z.string().min(1),
+  R2_SECRET_ACCESS_KEY: z.string().min(1),
+  R2_BUCKET_NAME: z.string().min(1),
+  R2_PUBLIC_BUCKET_NAME: z.string().min(1).optional(),
+  R2_PUBLIC_BASE_URL: z.string().url().optional(),
+  PLAYBACK_SIGNING_SECRET: z.string().min(32),
+  AI_PROVIDER: z.string().min(1).optional(),
+  AI_API_KEY: z.string().min(1).optional(),
+  OPENAI_API_KEY: z.string().min(1).optional(),
+  OPENAI_BASE_URL: z.string().url().optional(),
+  OPENAI_GENERATION_MODEL: z.string().min(1).optional(),
+  OPENAI_EMBEDDING_MODEL: z.string().min(1).optional(),
+  OPENAI_TRANSCRIPTION_MODEL: z.string().min(1).optional(),
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_BASE_URL: z.string().url().optional(),
+  ANTHROPIC_MODEL: z.string().min(1).optional(),
+  TELEMETRY_ENDPOINT: z.string().url().optional(),
+  TELEMETRY_API_KEY: z.string().min(1).optional(),
+});
+
+export const env = envSchema.parse({
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID,
+  R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID,
+  R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
+  R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
+  R2_PUBLIC_BUCKET_NAME: process.env.R2_PUBLIC_BUCKET_NAME || undefined,
+  R2_PUBLIC_BASE_URL: process.env.R2_PUBLIC_BASE_URL,
+  PLAYBACK_SIGNING_SECRET: process.env.PLAYBACK_SIGNING_SECRET,
+  AI_PROVIDER: process.env.AI_PROVIDER || undefined,
+  AI_API_KEY: process.env.AI_API_KEY || undefined,
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY || undefined,
+  OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || undefined,
+  OPENAI_GENERATION_MODEL: process.env.OPENAI_GENERATION_MODEL || undefined,
+  OPENAI_EMBEDDING_MODEL: process.env.OPENAI_EMBEDDING_MODEL || undefined,
+  OPENAI_TRANSCRIPTION_MODEL: process.env.OPENAI_TRANSCRIPTION_MODEL || undefined,
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || undefined,
+  ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL || undefined,
+  ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL || undefined,
+  TELEMETRY_ENDPOINT: process.env.TELEMETRY_ENDPOINT || undefined,
+  TELEMETRY_API_KEY: process.env.TELEMETRY_API_KEY || undefined,
+});
+
+export type Env = z.infer<typeof envSchema>;

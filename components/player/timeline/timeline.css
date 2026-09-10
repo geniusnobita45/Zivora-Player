@@ -1,0 +1,79 @@
+.zivora-precision-timeline {
+  position: relative;
+  min-width: 0;
+  touch-action: none;
+}
+.zivora-timeline-hit {
+  position: relative;
+  height: 44px;
+}
+.zivora-timeline-canvas {
+  position: absolute;
+  inset: 0 7px;
+  width: calc(100% - 14px);
+  height: 44px;
+  pointer-events: none;
+}
+.zivora-timeline-hit input {
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  touch-action: none;
+}
+.zivora-timeline-hit input::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: transparent;
+  border: 0;
+}
+.zivora-timeline-hit input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: transparent;
+  border: 0;
+}
+.zivora-timeline-hit input::-moz-range-track {
+  background: transparent;
+}
+.zivora-timeline-labels {
+  position: relative;
+  height: 16px;
+  overflow: hidden;
+  font-size: 11px;
+  color: #e2e8f0;
+  margin: 0 7px;
+}
+.zivora-timeline-labels:empty {
+  height: 0;
+}
+.zivora-timeline-labels span {
+  position: absolute;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zivora-scene-labels {
+  color: #c4b5fd;
+}
+.zivora-timeline-preview {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(320px, 90vw);
+  padding: 8px;
+  border-radius: 8px;
+  background: #0f172a;
+  border: 1px solid #64748b;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 2;
+}
+.zivora-timeline-preview span {
+  display: block;
+  overflow-wrap: anywhere;
+}

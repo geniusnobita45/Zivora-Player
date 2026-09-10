@@ -1,0 +1,34 @@
+create or replace function public.register_media_version(version_id uuid, media jsonb)
+returns void language plpgsql security invoker set search_path = '' as $$
+declare v public.media_versions%rowtype;
+begin
+  select * into strict v from public.media_versions where id = $1 for update;
+  if v.state <> 'UPLOADED' or v.published_at is not null then raise exception 'Reservation cannot be registered again'; end if;
+  if jsonb_typeof(media->'checksums') is distinct from 'object' or media->'checksums' = '{}'::jsonb then raise exception 'Checksums are required'; end if;
+  if exists(select 1 from jsonb_each_text(media->'checksums') a where a.value is null or a.value !~ '^[a-f0-9]{64}$' or a.key !~ '^[A-Za-z0-9_-][A-Za-z0-9._-]*(/[A-Za-z0-9_-][A-Za-z0-9._-]*)*$') then raise exception 'Invalid checksums'; end if;
+  if jsonb_typeof(media->'manifests') is distinct from 'array' or jsonb_typeof(media->'renditions') is distinct from 'array'
+    or jsonb_typeof(media->'audio_tracks') is distinct from 'array' or jsonb_typeof(media->'subtitle_tracks') is distinct from 'array'
+    or jsonb_typeof(media->'thumbnails') is distinct from 'array' then raise exception 'Media inventories must be arrays'; end if;
+  if jsonb_array_length(media->'renditions') <> 4 or jsonb_array_length(media->'audio_tracks') < 1
+    or jsonb_array_length(media->'thumbnails') < 1 then raise exception 'Incomplete media inventory'; end if;
+  -- Intelligence and local validation already ran at ingestion. Record the frozen
+  -- processing progression together with registration in this single transaction.
+  update public.media_versions set state = 'PROCESSING' where id = $1;
+  update public.media_versions set state = 'AI_PROCESSING' where id = $1;
+  update public.media_versions set state = 'VALIDATING', checksums = media->'checksums' where id = $1;
+  insert into public.manifests(media_version_id, kind, path, checksum_sha256)
+    select $1, x.kind::public.manifest_kind, x.path, x.checksum_sha256
+    from jsonb_to_recordset(media->'manifests') x(kind text, path text, checksum_sha256 text);
+  insert into public.renditions(media_version_id, quality_id, width, height, video_bitrate, max_rate, buffer_size, playlist_path, checksum_sha256)
+    select $1, x.quality_id, x.width, x.height, x.video_bitrate, x.max_rate, x.buffer_size, x.playlist_path, x.checksum_sha256
+    from jsonb_to_recordset(media->'renditions') x(quality_id text, width integer, height integer, video_bitrate integer, max_rate integer, buffer_size integer, playlist_path text, checksum_sha256 text);
+  insert into public.audio_tracks(media_version_id, language, label, playlist_path, checksum_sha256, is_default)
+    select $1, x.language, x.label, x.playlist_path, x.checksum_sha256, x.is_default
+    from jsonb_to_recordset(media->'audio_tracks') x(language text, label text, playlist_path text, checksum_sha256 text, is_default boolean);
+  insert into public.subtitle_tracks(media_version_id, language, label, playlist_path, checksum_sha256, is_default, is_forced, kind, has_speaker_names, has_context_hints)
+    select $1, x.language, x.label, x.playlist_path, x.checksum_sha256, x.is_default, x.is_forced, coalesce(x.kind, 'original'), coalesce(x.has_speaker_names, false), coalesce(x.has_context_hints, false)
+    from jsonb_to_recordset(media->'subtitle_tracks') x(language text, label text, playlist_path text, checksum_sha256 text, is_default boolean, is_forced boolean, kind text, has_speaker_names boolean, has_context_hints boolean);
+  insert into public.thumbnails(media_version_id, sprite_prefix, sprite_checksums, vtt_path, vtt_checksum_sha256)
+    select $1, x.sprite_prefix, x.sprite_checksums, x.vtt_path, x.vtt_checksum_sha256
+    from jsonb_to_recordset(media->'thumbnails') x(sprite_prefix text, sprite_checksums jsonb, vtt_path text, vtt_checksum_sha256 text);
+end $$;
